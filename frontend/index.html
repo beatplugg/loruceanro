@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Loruceanro</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+  <!-- Nav -->
+  <nav class="bg-white shadow-sm sticky top-0 z-20">
+    <div class="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
+      <a href="#catalog" class="text-xl font-bold text-indigo-600 tracking-tight">Loruceanro</a>
+      <div class="flex gap-4 items-center text-sm">
+        <a href="#catalog" class="nav-link">Каталог</a>
+        <a href="#orders"  class="nav-link auth-only hidden">Замовлення</a>
+        <a href="#profile" class="nav-link auth-only hidden">Кабінет</a>
+        <a href="#admin"   class="nav-link admin-only hidden text-amber-600 font-semibold">Адмін</a>
+        <button id="nav-cart" onclick="showCart()" class="relative hover:text-indigo-600 px-1">
+          🛒 <span id="cart-count" class="badge">0</span>
+        </button>
+        <button onclick="navigate('login')" class="btn-primary auth-hide hidden">Увійти</button>
+        <button onclick="logout()" class="auth-only hidden text-gray-400 hover:text-red-500 text-xs">Вийти</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-6xl mx-auto px-4 py-8">
+
+    <!-- ── Логін ──────────────────────────────────────────────────────────── -->
+    <div id="page-login" class="hidden max-w-md mx-auto">
+      <div class="bg-white rounded-2xl shadow p-8">
+        <div class="flex gap-4 mb-6 border-b">
+          <button onclick="switchTab('login')"    id="tab-login"    class="tab-btn active pb-3">Увійти</button>
+          <button onclick="switchTab('register')" id="tab-register" class="tab-btn pb-3">Реєстрація</button>
+        </div>
+        <form id="form-login" onsubmit="doLogin(event)">
+          <input name="email"    type="email"    placeholder="Email"  required class="input mb-3" />
+          <input name="password" type="password" placeholder="Пароль" required class="input mb-4" />
+          <button class="btn-primary w-full">Увійти</button>
+        </form>
+        <form id="form-register" onsubmit="doRegister(event)" class="hidden">
+          <input name="name"     placeholder="Ім'я"   required class="input mb-3" />
+          <input name="email"    type="email" placeholder="Email"  required class="input mb-3" />
+          <input name="password" type="password" placeholder="Пароль" required class="input mb-4" />
+          <button class="btn-primary w-full">Створити акаунт</button>
+        </form>
+        <p id="auth-error" class="text-red-500 text-sm mt-3 hidden"></p>
+      </div>
+    </div>
+
+    <!-- ── Каталог ────────────────────────────────────────────────────────── -->
+    <div id="page-catalog" class="hidden">
+      <div class="flex gap-3 mb-4 flex-wrap items-center">
+        <button onclick="loadProducts(null)" class="chip active" id="cat-all">Всі</button>
+        <div id="categories" class="flex gap-3 flex-wrap"></div>
+      </div>
+      <input id="search-input" placeholder="Пошук товарів..." oninput="searchProducts()" class="input max-w-sm mb-6" />
+      <div id="products-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+    </div>
+
+    <!-- ── Замовлення ─────────────────────────────────────────────────────── -->
+    <div id="page-orders" class="hidden">
+      <h2 class="text-xl font-bold mb-5">Мої замовлення</h2>
+      <div id="orders-list"></div>
+    </div>
+
+    <!-- ── Кабінет ────────────────────────────────────────────────────────── -->
+    <div id="page-profile" class="hidden max-w-2xl mx-auto">
+      <div class="bg-white rounded-2xl shadow p-8 mb-6">
+        <div class="flex items-center gap-5 mb-6">
+          <div class="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center text-2xl font-bold text-indigo-600" id="profile-avatar"></div>
+          <div>
+            <h2 id="profile-name" class="text-xl font-bold"></h2>
+            <p id="profile-email" class="text-gray-400 text-sm"></p>
+            <span id="profile-admin-badge" class="hidden text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium mt-1 inline-block">Адміністратор</span>
+          </div>
+        </div>
+        <form onsubmit="updateProfile(event)" class="border-t pt-5">
+          <label class="text-sm font-medium text-gray-600 block mb-1">Ім'я</label>
+          <div class="flex gap-3">
+            <input id="profile-name-input" class="input" placeholder="Ваше ім'я" required />
+            <button class="btn-primary whitespace-nowrap">Зберегти</button>
+          </div>
+        </form>
+      </div>
+      <h3 class="font-bold mb-3">Останні замовлення</h3>
+      <div id="profile-orders"></div>
+    </div>
+
+    <!-- ── Адмін ──────────────────────────────────────────────────────────── -->
+    <div id="page-admin" class="hidden">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-bold">Панель адміністратора</h2>
+        <div class="flex gap-2">
+          <button onclick="adminTab('products')"   id="atab-products"   class="chip active">Товари</button>
+          <button onclick="adminTab('categories')" id="atab-categories" class="chip">Категорії</button>
+        </div>
+      </div>
+
+      <!-- Товари -->
+      <div id="admin-products">
+        <div class="bg-white rounded-2xl shadow p-6 mb-6">
+          <h3 class="font-semibold mb-4" id="product-form-title">Додати товар</h3>
+          <form onsubmit="submitProduct(event)" id="product-form">
+            <input type="hidden" id="pf-id" />
+            <div class="grid grid-cols-2 gap-3 mb-3">
+              <input id="pf-name"  placeholder="Назва *" required class="input col-span-2" />
+              <input id="pf-price" placeholder="Ціна *" type="number" step="0.01" required class="input" />
+              <input id="pf-stock" placeholder="Кількість на складі" type="number" value="0" class="input" />
+              <select id="pf-cat" class="input col-span-2"></select>
+              <input id="pf-img"  placeholder="URL зображення" class="input col-span-2" />
+              <textarea id="pf-desc" placeholder="Опис" rows="2" class="input col-span-2"></textarea>
+            </div>
+            <div class="flex gap-3">
+              <button class="btn-primary" id="pf-submit">Додати товар</button>
+              <button type="button" onclick="resetProductForm()" class="btn-secondary hidden" id="pf-cancel">Скасувати</button>
+            </div>
+          </form>
+        </div>
+        <div class="bg-white rounded-2xl shadow overflow-hidden">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
+              <tr>
+                <th class="px-4 py-3 text-left">Товар</th>
+                <th class="px-4 py-3 text-left">Категорія</th>
+                <th class="px-4 py-3 text-right">Ціна</th>
+                <th class="px-4 py-3 text-right">Склад</th>
+                <th class="px-4 py-3"></th>
+              </tr>
+            </thead>
+            <tbody id="admin-products-table"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Категорії -->
+      <div id="admin-categories" class="hidden">
+        <div class="bg-white rounded-2xl shadow p-6 mb-6">
+          <h3 class="font-semibold mb-4">Додати категорію</h3>
+          <form onsubmit="addCategory(event)" class="flex gap-3">
+            <input id="cat-name-input" placeholder="Назва категорії" required class="input" />
+            <button class="btn-primary whitespace-nowrap">Додати</button>
+          </form>
+        </div>
+        <div class="bg-white rounded-2xl shadow overflow-hidden">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
+              <tr>
+                <th class="px-4 py-3 text-left">Категорія</th>
+                <th class="px-4 py-3"></th>
+              </tr>
+            </thead>
+            <tbody id="admin-categories-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Кошик -->
+  <div id="cart-modal" class="modal-overlay hidden" onclick="closeCart(event)">
+    <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md mx-4">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-bold">Кошик</h3>
+        <button onclick="closeCartModal()" class="text-gray-400 hover:text-gray-600 text-xl">✕</button>
+      </div>
+      <div id="cart-items"></div>
+      <div id="cart-total" class="border-t pt-4 mt-4 font-bold text-right hidden"></div>
+      <button id="cart-checkout-btn" onclick="checkout()" class="btn-primary w-full mt-4 hidden">Оформити замовлення</button>
+      <p id="cart-empty" class="text-gray-400 text-center py-4">Кошик порожній</p>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
