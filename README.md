@@ -21,4 +21,4 @@ https://hub.docker.com/repositories/beatplugg
 └── user-service
     ├── Dockerfile
     ├── main.py
-    └── requirements.txt```
+    └── requirements.txt
